@@ -1,0 +1,1425 @@
+openapi: 3.0.1
+
+# ThorAPI Enhanced Sections
+info:
+externalDocs:
+servers:
+tags:
+paths:
+{{#each schemas as |schema key|}}
+
+  /{{key}}:
+    get:
+      tags:
+        - {{key}}
+      summary: Retrieve a list of {{key}}s
+      description: Retrieves a list of {{key}}s.
+      x-spring-cacheable: true
+      operationId: get{{key}}List
+      responses:
+        '200':
+          description: Successfully retrieved the list of {{key}}s.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/{{key}}'
+        '404':
+          description: No {{key}}s were found.
+        '500':
+          description: Internal server error.
+
+    post:
+      tags:
+        - {{key}}
+      summary: Create a new {{key}}
+      description: Creates a new {{key}}.
+      operationId: post{{key}}
+      requestBody:
+        description: {{key}} details.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/{{key}}'
+      responses:
+        '201':
+          description: {{key}} created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/{{key}}'
+        '400':
+          description: Invalid input.
+        '404':
+          description: {{key}} not found.
+        '500':
+          description: Internal server error.
+
+
+  /{{key}}/{id}:
+    get:
+      tags:
+        - {{key}}
+      summary: Retrieve a single {{key}}
+      description: Retrieves a single {{key}} for a specific uid.
+      x-spring-cacheable: true
+      operationId: get{{key}}
+      parameters:
+        - name: id
+          schema:
+            type: string
+            format: uuid
+          in: path
+          required: true
+          description: Unique identifier for the {{key}}.
+
+      responses:
+        '200':
+          description: Successfully retrieved the {{key}}.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/{{key}}'
+        '404':
+          description: {{key}} not found.
+        '500':
+          description: Internal server error.
+
+    put:
+      tags:
+        - {{key}}
+      summary: Update an existing {{key}}
+      description: Updates an existing {{key}}.
+      operationId: update{{key}}
+      parameters:
+        - name: id
+          schema:
+            type: string
+            format: uuid
+          in: path
+          required: true
+          description: Unique identifier for the {{key}}.
+
+      requestBody:
+        description: Updated {{key}} details.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/{{key}}'
+      responses:
+        '200':
+          description: {{key}} updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/{{key}}'
+        '400':
+          description: Invalid input.
+        '404':
+          description: {{key}} not found.
+        '500':
+          description: Internal server error.
+
+    delete:
+      tags:
+        - {{key}}
+      summary: Delete a {{key}}.
+      description: Deletes a specific {{key}}.
+      operationId: delete{{key}}
+      parameters:
+        - name: id
+          schema:
+            type: string
+            format: uuid
+          in: path
+          required: true
+          description: Unique identifier for the {{key}}.
+
+      responses:
+        '204':
+          description: {{key}} deleted successfully.
+        '404':
+          description: {{key}} not found.
+        '500':
+          description: Internal server error.
+
+
+{{/each}}
+
+
+components:
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      description: The unique identifier of the object to retrieve.
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+
+    ## PEPTIDE CORE SYSTEM
+
+    Peptide:
+      type: object
+      description: A peptide compound with its properties and characteristics
+      properties:
+        name:
+          type: string
+          description: Common name of the peptide
+          example: BPC-157
+        scientificName:
+          type: string
+          description: Scientific/chemical name
+          example: Body Protection Compound-157
+        sequence:
+          type: string
+          description: Amino acid sequence
+          example: GEPPPGKPADDAGLV
+        molecularWeight:
+          type: number
+          format: double
+          description: Molecular weight in Daltons
+        categoryId:
+          type: string
+          format: uuid
+        category:
+          $ref: '#/components/schemas/PeptideCategory'
+        description:
+          type: string
+          maxLength: 5000
+          description: Detailed description of the peptide
+        benefits:
+          type: array
+          items:
+            type: string
+          description: List of potential benefits
+        sideEffects:
+          type: array
+          items:
+            type: string
+          description: Known side effects
+        contraindications:
+          type: array
+          items:
+            type: string
+          description: Conditions where peptide should not be used
+        halfLife:
+          type: string
+          description: Biological half-life
+          example: 4-6 hours
+        storageRequirements:
+          type: string
+          description: Storage temperature and conditions
+          example: Store at -20°C, protect from light
+        researchStatus:
+          type: string
+          enum:
+            - preclinical
+            - phase_1
+            - phase_2
+            - phase_3
+            - approved
+            - investigational
+        regulatoryStatus:
+          type: string
+          enum:
+            - research_only
+            - prescription
+            - otc
+            - banned
+            - unregulated
+        isActive:
+          type: boolean
+          default: true
+      required:
+        - name
+        - categoryId
+
+    PeptideCategory:
+      type: object
+      description: Categories for organizing peptides
+      properties:
+        name:
+          type: string
+          example: Growth Hormone Releasing
+        description:
+          type: string
+        primaryUse:
+          type: string
+          enum:
+            - anti_aging
+            - muscle_building
+            - fat_loss
+            - healing
+            - cognitive
+            - immune
+            - metabolic
+            - aesthetic
+            - performance
+        color:
+          type: string
+          description: UI color code for category
+          example: "#4CAF50"
+      required:
+        - name
+        - primaryUse
+
+    PeptideIntake:
+      type: object
+      description: Record of peptide administration
+      properties:
+        principalId:
+          type: string
+          format: uuid
+          description: User who took the peptide
+        peptideId:
+          type: string
+          format: uuid
+        peptide:
+          $ref: '#/components/schemas/Peptide'
+        batchId:
+          type: string
+          format: uuid
+        batch:
+          $ref: '#/components/schemas/PeptideBatch'
+        dosage:
+          type: number
+          format: double
+          description: Dosage amount
+        dosageUnit:
+          type: string
+          enum:
+            - mg
+            - mcg
+            - iu
+            - ml
+            - units
+        administrationRoute:
+          type: string
+          enum:
+            - subcutaneous
+            - intramuscular
+            - oral
+            - nasal
+            - topical
+            - intravenous
+        administrationSite:
+          type: string
+          description: Body location where administered
+          example: abdomen, thigh, deltoid
+        takenAt:
+          type: string
+          format: date-time
+        notes:
+          type: string
+          maxLength: 1000
+        sideEffectsExperienced:
+          type: array
+          items:
+            type: string
+        effectivenessRating:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: User-reported effectiveness (1-10)
+        stackId:
+          type: string
+          format: uuid
+          description: If part of a stack
+        protocolId:
+          type: string
+          format: uuid
+          description: If following a protocol
+      required:
+        - principalId
+        - peptideId
+        - dosage
+        - dosageUnit
+        - administrationRoute
+        - takenAt
+
+    PeptideStack:
+      type: object
+      description: Combination of peptides taken together
+      properties:
+        principalId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Healing Stack
+        description:
+          type: string
+        goal:
+          type: string
+          enum:
+            - muscle_gain
+            - fat_loss
+            - healing
+            - anti_aging
+            - cognitive
+            - performance
+            - general_health
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        isActive:
+          type: boolean
+          default: true
+        peptides:
+          type: array
+          items:
+            $ref: '#/components/schemas/StackPeptide'
+        intakes:
+          type: array
+          items:
+            $ref: '#/components/schemas/PeptideIntake'
+      required:
+        - principalId
+        - name
+        - goal
+
+    StackPeptide:
+      type: object
+      description: Peptide configuration within a stack
+      properties:
+        stackId:
+          type: string
+          format: uuid
+        peptideId:
+          type: string
+          format: uuid
+        peptide:
+          $ref: '#/components/schemas/Peptide'
+        dosage:
+          type: number
+          format: double
+        dosageUnit:
+          type: string
+          enum:
+            - mg
+            - mcg
+            - iu
+            - ml
+            - units
+        frequency:
+          type: string
+          description: How often to take
+          example: twice daily, every other day
+        administrationRoute:
+          type: string
+          enum:
+            - subcutaneous
+            - intramuscular
+            - oral
+            - nasal
+            - topical
+        timing:
+          type: string
+          description: When to take relative to meals, sleep, etc.
+          example: before breakfast, post-workout
+        order:
+          type: integer
+          description: Order in the stack
+      required:
+        - stackId
+        - peptideId
+        - dosage
+        - dosageUnit
+        - frequency
+
+    PeptideProtocol:
+      type: object
+      description: Structured protocol for peptide usage
+      properties:
+        name:
+          type: string
+          example: BPC-157 Healing Protocol
+        description:
+          type: string
+        authorId:
+          type: string
+          format: uuid
+          description: Creator of the protocol
+        isPublic:
+          type: boolean
+          default: false
+        category:
+          type: string
+          enum:
+            - beginner
+            - intermediate
+            - advanced
+            - medical
+        goal:
+          type: string
+          enum:
+            - muscle_gain
+            - fat_loss
+            - healing
+            - anti_aging
+            - cognitive
+            - performance
+            - general_health
+        duration:
+          type: integer
+          description: Protocol duration in days
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProtocolPhase'
+        warnings:
+          type: array
+          items:
+            type: string
+        prerequisites:
+          type: array
+          items:
+            type: string
+        expectedResults:
+          type: string
+        rating:
+          type: number
+          format: double
+          description: Average user rating
+        usageCount:
+          type: integer
+          description: Number of times protocol has been used
+      required:
+        - name
+        - authorId
+        - goal
+        - duration
+
+    ProtocolPhase:
+      type: object
+      description: Phase within a peptide protocol
+      properties:
+        protocolId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Loading Phase
+        description:
+          type: string
+        phaseOrder:
+          type: integer
+        startDay:
+          type: integer
+        endDay:
+          type: integer
+        peptides:
+          type: array
+          items:
+            $ref: '#/components/schemas/StackPeptide'
+        instructions:
+          type: string
+        expectedEffects:
+          type: string
+      required:
+        - protocolId
+        - name
+        - phaseOrder
+        - startDay
+        - endDay
+
+    PeptideSupplier:
+      type: object
+      description: Supplier/vendor of peptides
+      properties:
+        name:
+          type: string
+        website:
+          type: string
+          format: url
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        addressId:
+          type: string
+          format: uuid
+        address:
+          $ref: '#/components/schemas/Address'
+        rating:
+          type: number
+          format: double
+          minimum: 1
+          maximum: 5
+        isVerified:
+          type: boolean
+          default: false
+        certifications:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+      required:
+        - name
+
+    PeptideBatch:
+      type: object
+      description: Specific batch of peptide from supplier
+      properties:
+        supplierId:
+          type: string
+          format: uuid
+        supplier:
+          $ref: '#/components/schemas/PeptideSupplier'
+        peptideId:
+          type: string
+          format: uuid
+        peptide:
+          $ref: '#/components/schemas/Peptide'
+        batchNumber:
+          type: string
+        manufactureDate:
+          type: string
+          format: date
+        expirationDate:
+          type: string
+          format: date
+        purity:
+          type: number
+          format: double
+          description: Purity percentage
+        concentration:
+          type: number
+          format: double
+        concentrationUnit:
+          type: string
+          enum:
+            - mg/ml
+            - mcg/ml
+            - iu/ml
+        volume:
+          type: number
+          format: double
+        volumeUnit:
+          type: string
+          enum:
+            - ml
+            - vials
+        costPerUnit:
+          type: number
+          format: double
+        currency:
+          type: string
+          default: USD
+        purchaseDate:
+          type: string
+          format: date
+        testResults:
+          type: string
+          description: Lab test results if available
+        storageLocation:
+          type: string
+          example: Freezer A, Shelf 2
+        isFinished:
+          type: boolean
+          default: false
+      required:
+        - supplierId
+        - peptideId
+        - batchNumber
+
+    ## HEALTH TRACKING SYSTEM
+
+    HealthGoal:
+      type: object
+      description: User's health and fitness goals
+      properties:
+        principalId:
+          type: string
+          format: uuid
+        title:
+          type: string
+          example: Lose 20 pounds
+        description:
+          type: string
+        category:
+          type: string
+          enum:
+            - weight_loss
+            - muscle_gain
+            - strength
+            - endurance
+            - recovery
+            - sleep
+            - cognitive
+            - longevity
+            - aesthetic
+            - health_marker
+        targetValue:
+          type: number
+          format: double
+        currentValue:
+          type: number
+          format: double
+        unit:
+          type: string
+          example: lbs, kg, %, minutes
+        targetDate:
+          type: string
+          format: date
+        priority:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - critical
+        status:
+          type: string
+          enum:
+            - active
+            - achieved
+            - paused
+            - abandoned
+        relatedPeptides:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Peptides being used for this goal
+        progress:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoalProgress'
+      required:
+        - principalId
+        - title
+        - category
+
+    GoalProgress:
+      type: object
+      description: Progress tracking for health goals
+      properties:
+        goalId:
+          type: string
+          format: uuid
+        recordedAt:
+          type: string
+          format: date-time
+        value:
+          type: number
+          format: double
+        notes:
+          type: string
+        photoUrl:
+          type: string
+          format: url
+          description: Progress photo if applicable
+      required:
+        - goalId
+        - recordedAt
+        - value
+
+    BiomarkerReading:
+      type: object
+      description: Laboratory biomarker test results
+      properties:
+        principalId:
+          type: string
+          format: uuid
+        testName:
+          type: string
+          example: Testosterone Total
+        value:
+          type: number
+          format: double
+        unit:
+          type: string
+          example: ng/dL, mg/dL, IU/L
+        referenceRangeLow:
+          type: number
+          format: double
+        referenceRangeHigh:
+          type: number
+          format: double
+        testDate:
+          type: string
+          format: date
+        labName:
+          type: string
+        doctorName:
+          type: string
+          x-thorapi-secureField: true
+        category:
+          type: string
+          enum:
+            - hormone
+            - lipid
+            - metabolic
+            - inflammatory
+            - vitamin
+            - mineral
+            - liver
+            - kidney
+            - thyroid
+            - cardiac
+            - immune
+        isAbnormal:
+          type: boolean
+        notes:
+          type: string
+          x-thorapi-secureField: true
+        reportUrl:
+          type: string
+          format: url
+          description: Link to full lab report
+          x-thorapi-secureField: true
+      required:
+        - principalId
+        - testName
+        - value
+        - unit
+        - testDate
+
+    UrinalysisResult:
+      type: object
+      description: Urinalysis test results
+      properties:
+        principalId:
+          type: string
+          format: uuid
+        testDate:
+          type: string
+          format: date
+        specificGravity:
+          type: number
+          format: double
+        ph:
+          type: number
+          format: double
+        protein:
+          type: string
+          enum:
+            - negative
+            - trace
+            - 1+
+            - 2+
+            - 3+
+            - 4+
+        glucose:
+          type: string
+          enum:
+            - negative
+            - trace
+            - 1+
+            - 2+
+            - 3+
+            - 4+
+        ketones:
+          type: string
+          enum:
+            - negative
+            - trace
+            - small
+            - moderate
+            - large
+        blood:
+          type: string
+          enum:
+            - negative
+            - trace
+            - 1+
+            - 2+
+            - 3+
+        leukocyteEsterase:
+          type: string
+          enum:
+            - negative
+            - trace
+            - 1+
+            - 2+
+            - 3+
+        nitrites:
+          type: string
+          enum:
+            - negative
+            - positive
+        color:
+          type: string
+          example: yellow, amber, clear
+        clarity:
+          type: string
+          enum:
+            - clear
+            - slightly_cloudy
+            - cloudy
+            - turbid
+        labName:
+          type: string
+        notes:
+          type: string
+          x-thorapi-secureField: true
+      required:
+        - principalId
+        - testDate
+
+    AppleHealthData:
+      type: object
+      description: Data imported from Apple Health
+      properties:
+        principalId:
+          type: string
+          format: uuid
+        dataType:
+          type: string
+          enum:
+            - heart_rate
+            - blood_pressure
+            - weight
+            - body_fat
+            - steps
+            - sleep
+            - hrv
+            - vo2_max
+            - resting_heart_rate
+            - blood_glucose
+            - body_temperature
+        value:
+          type: number
+          format: double
+        unit:
+          type: string
+        recordedAt:
+          type: string
+          format: date-time
+        sourceApp:
+          type: string
+          example: Apple Watch, iPhone, Third-party app
+        deviceModel:
+          type: string
+        syncedAt:
+          type: string
+          format: date-time
+      required:
+        - principalId
+        - dataType
+        - value
+        - unit
+        - recordedAt
+
+    HealthMetric:
+      type: object
+      description: General health metric tracking
+      properties:
+        principalId:
+          type: string
+          format: uuid
+        metricName:
+          type: string
+          example: Energy Level, Mood, Sleep Quality
+        value:
+          type: number
+          format: double
+        scale:
+          type: string
+          example: 1-10, 1-5, percentage
+        recordedAt:
+          type: string
+          format: date-time
+        category:
+          type: string
+          enum:
+            - subjective
+            - objective
+            - performance
+            - recovery
+        notes:
+          type: string
+        relatedIntakeId:
+          type: string
+          format: uuid
+          description: Related peptide intake if applicable
+      required:
+        - principalId
+        - metricName
+        - value
+        - recordedAt
+
+    SymptomLog:
+      type: object
+      description: Symptom tracking and logging
+      properties:
+        principalId:
+          type: string
+          format: uuid
+        symptom:
+          type: string
+          example: Headache, Nausea, Fatigue
+        severity:
+          type: integer
+          minimum: 1
+          maximum: 10
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        triggers:
+          type: array
+          items:
+            type: string
+        treatments:
+          type: array
+          items:
+            type: string
+        notes:
+          type: string
+        relatedIntakeId:
+          type: string
+          format: uuid
+          description: Related peptide intake if applicable
+      required:
+        - principalId
+        - symptom
+        - severity
+        - startTime
+
+    SideEffectReport:
+      type: object
+      description: Adverse event or side effect reporting
+      properties:
+        principalId:
+          type: string
+          format: uuid
+        peptideIntakeId:
+          type: string
+          format: uuid
+        peptideIntake:
+          $ref: '#/components/schemas/PeptideIntake'
+        sideEffect:
+          type: string
+        severity:
+          type: string
+          enum:
+            - mild
+            - moderate
+            - severe
+            - life_threatening
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        description:
+          type: string
+        actionTaken:
+          type: string
+          enum:
+            - none
+            - dose_reduced
+            - discontinued
+            - medical_attention
+        resolved:
+          type: boolean
+        reportedToAuthorities:
+          type: boolean
+          default: false
+        notes:
+          type: string
+          x-thorapi-secureField: true
+      required:
+        - principalId
+        - peptideIntakeId
+        - sideEffect
+        - severity
+        - startTime
+
+    ## PROTOCOL MANAGEMENT
+
+    Protocol:
+      type: object
+      description: General protocol framework
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+            - peptide
+            - supplement
+            - exercise
+            - diet
+            - lifestyle
+        authorId:
+          type: string
+          format: uuid
+        isPublic:
+          type: boolean
+          default: false
+        difficulty:
+          type: string
+          enum:
+            - beginner
+            - intermediate
+            - advanced
+        duration:
+          type: integer
+          description: Duration in days
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProtocolPhase'
+        requirements:
+          type: array
+          items:
+            type: string
+        contraindications:
+          type: array
+          items:
+            type: string
+        expectedOutcomes:
+          type: string
+        rating:
+          type: number
+          format: double
+        reviewCount:
+          type: integer
+      required:
+        - name
+        - type
+        - authorId
+
+    CycleSchedule:
+      type: object
+      description: Cycling schedule for peptides (on/off periods)
+      properties:
+        principalId:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: 5 days on, 2 days off
+        peptideId:
+          type: string
+          format: uuid
+        onDays:
+          type: integer
+          description: Number of days on
+        offDays:
+          type: integer
+          description: Number of days off
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        isActive:
+          type: boolean
+          default: true
+        notes:
+          type: string
+      required:
+        - principalId
+        - name
+        - peptideId
+        - onDays
+        - offDays
+
+    DosageCalculation:
+      type: object
+      description: Dosage calculations based on body weight, goals, etc.
+      properties:
+        peptideId:
+          type: string
+          format: uuid
+        bodyWeight:
+          type: number
+          format: double
+        weightUnit:
+          type: string
+          enum:
+            - kg
+            - lbs
+        dosagePerKg:
+          type: number
+          format: double
+        calculatedDosage:
+          type: number
+          format: double
+        dosageUnit:
+          type: string
+          enum:
+            - mg
+            - mcg
+            - iu
+        adjustmentFactor:
+          type: number
+          format: double
+          default: 1.0
+          description: Adjustment based on experience, goals, etc.
+        notes:
+          type: string
+      required:
+        - peptideId
+        - bodyWeight
+        - weightUnit
+        - dosagePerKg
+
+    ## HIPAA COMPLIANCE
+
+    HealthRecord:
+      type: object
+      description: Comprehensive health record for HIPAA compliance
+      properties:
+        principalId:
+          type: string
+          format: uuid
+        recordType:
+          type: string
+          enum:
+            - intake
+            - biomarker
+            - symptom
+            - side_effect
+            - goal_progress
+        recordId:
+          type: string
+          format: uuid
+          description: ID of the specific record
+        encryptedData:
+          type: string
+          description: Encrypted health data
+          x-thorapi-secureField: true
+        dataHash:
+          type: string
+          description: Hash for data integrity verification
+        accessLevel:
+          type: string
+          enum:
+            - patient_only
+            - healthcare_provider
+            - emergency
+            - research_anonymized
+        retentionDate:
+          type: string
+          format: date
+          description: Date when record should be deleted
+        consentId:
+          type: string
+          format: uuid
+        consent:
+          $ref: '#/components/schemas/ConsentForm'
+      required:
+        - principalId
+        - recordType
+        - recordId
+        - encryptedData
+        - accessLevel
+
+    ConsentForm:
+      type: object
+      description: User consent for data collection and usage
+      properties:
+        principalId:
+          type: string
+          format: uuid
+        consentType:
+          type: string
+          enum:
+            - data_collection
+            - data_sharing
+            - research_participation
+            - marketing
+            - third_party_integration
+        consentGiven:
+          type: boolean
+        consentDate:
+          type: string
+          format: date-time
+        expirationDate:
+          type: string
+          format: date
+        version:
+          type: string
+          description: Version of consent form
+        ipAddress:
+          type: string
+          description: IP address when consent was given
+          x-thorapi-secureField: true
+        userAgent:
+          type: string
+          description: Browser/device info
+        digitalSignature:
+          type: string
+          description: Digital signature if applicable
+          x-thorapi-secureField: true
+        witnessId:
+          type: string
+          format: uuid
+          description: Healthcare provider witness if applicable
+      required:
+        - principalId
+        - consentType
+        - consentGiven
+        - consentDate
+        - version
+
+    DataAccessLog:
+      type: object
+      description: Audit log for health data access
+      properties:
+        principalId:
+          type: string
+          format: uuid
+          description: Patient whose data was accessed
+        accessorId:
+          type: string
+          format: uuid
+          description: User who accessed the data
+        accessorType:
+          type: string
+          enum:
+            - patient
+            - healthcare_provider
+            - system
+            - researcher
+            - support
+        dataType:
+          type: string
+          description: Type of data accessed
+        recordIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Specific records accessed
+        accessTime:
+          type: string
+          format: date-time
+        accessReason:
+          type: string
+          enum:
+            - patient_request
+            - treatment
+            - emergency
+            - research
+            - audit
+            - system_maintenance
+        ipAddress:
+          type: string
+          x-thorapi-secureField: true
+        userAgent:
+          type: string
+        sessionId:
+          type: string
+          x-thorapi-secureField: true
+      required:
+        - principalId
+        - accessorId
+        - accessorType
+        - dataType
+        - accessTime
+        - accessReason
+
+    EncryptedHealthData:
+      type: object
+      description: Container for encrypted health data
+      properties:
+        dataId:
+          type: string
+          format: uuid
+        principalId:
+          type: string
+          format: uuid
+        encryptedPayload:
+          type: string
+          description: Encrypted JSON data
+          x-thorapi-secureField: true
+        encryptionKeyId:
+          type: string
+          format: uuid
+        encryptionAlgorithm:
+          type: string
+          default: AES-256-GCM
+        initializationVector:
+          type: string
+          x-thorapi-secureField: true
+        authenticationTag:
+          type: string
+          x-thorapi-secureField: true
+        dataType:
+          type: string
+          description: Type of data encrypted
+        createdAt:
+          type: string
+          format: date-time
+        lastAccessedAt:
+          type: string
+          format: date-time
+      required:
+        - dataId
+        - principalId
+        - encryptedPayload
+        - encryptionKeyId
+        - dataType
+
+    ## SecureField KMS - the ultimate encryption solution
+    SecureKey:
+      type: object
+      description: SecureKey is the KMS for the SecureField keys 
+      x-valkyrai-service: microservice
+      properties:
+        notes:
+          description: any notes about the key
+          type: string
+          maxLength: 1000
+          example: "This key was generated by the system"
+
+        algorithm:
+          description: the algorithm used for encryption/decryption
+          type: string
+
+        version:
+          description: the version of this key
+          type: string
+
+        keyHash:
+          description: the searchable hash of the key itself
+          type: string
+          minLength: 10
+          maxLength: 100
+
+        cipherWorkCost:
+          description: the exponential strength of the BCrypt hashing used by the Hashing cipher
+          example: 12
+          type: integer
+          minimum: 10
+          maximum: 35
+        
+        keyValue:
+          description: the key itself
+          type: string
+          minLength: 10
+          x-thorapi-secureField: true
+
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - DEFAULT            
+            - ARCHIVED
+            - REVOKED
+            - INVALID
+          x-enum-descriptions

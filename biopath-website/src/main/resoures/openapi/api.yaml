@@ -1,0 +1,144 @@
+openapi: 3.0.1
+
+info:
+  title: BioPeptide Tracker API
+  description: HIPAA-compliant API for tracking peptide intake, stacking protocols, and health biomarkers
+  termsOfService: https://biopeptidetracker.com/tos/
+  contact:
+    email: support@biopeptidetracker.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  version: 1.0.0
+
+externalDocs:
+  description: Learn more about BioPeptide Tracker
+  url: https://biopeptidetracker.com/docs
+
+servers:
+  - url: http://localhost:8080/v1
+    description: local server (uses live data)
+  - url: https://api.biopeptidetracker.com/v1
+    description: production server
+
+tags:
+  - name: admins
+    description: Secured Admin-only calls
+  - name: users
+    description: Operations available to regular users
+  - name: peptides
+    description: Peptide management operations
+  - name: health
+    description: Health tracking and biomarker operations
+  - name: protocols
+    description: Peptide protocol and stacking operations
+
+paths:
+
+## BioPeptide Tracker API
+components:
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      description: The unique identifier of the object to retrieve.
+      schema:
+        type: string
+        format: uuid
+
+## SCHEMAS LISTED HERE ARE PUBLIC AND AVAILABLE VIA REST API
+  schemas:
+    
+    ## PEPTIDE CORE SYSTEM
+    Peptide:
+    PeptideCategory:
+    PeptideIntake:
+    PeptideStack:
+    PeptideProtocol:
+    PeptideSupplier:
+    PeptideBatch:
+    
+    ## HEALTH TRACKING SYSTEM
+    HealthGoal:
+    BiomarkerReading:
+    UrinalysisResult:
+    AppleHealthData:
+    HealthMetric:
+    SymptomLog:
+    SideEffectReport:
+    
+    ## PROTOCOL MANAGEMENT
+    Protocol:
+    ProtocolPhase:
+    CycleSchedule:
+    DosageCalculation:
+    
+    ## HIPAA COMPLIANCE
+    HealthRecord:
+    ConsentForm:
+    DataAccessLog:
+    EncryptedHealthData:
+    
+    ## SECURE FIELD ENCRYPTION
+    SecureKey:
+    
+    ## BASIC SYSTEM COMPONENTS
+    Principal:
+    Organization:
+    Address:
+    UserPreference:
+    
+    ## RBAC SECURITY
+    Role:
+    Authority:
+    AclEntry:
+    AclSid:
+    AclClass:
+    AclObjectIdentity:
+    
+    ## CMS SYSTEM
+    ContentData:
+    ContentMediaLink:
+    Rating:
+    
+    ## CRM SYSTEM
+    Customer:
+    Opportunity:
+    SalesActivity:
+    SalesPipeline:
+    Invoice:
+    Note:
+    Product:
+    ProductFeature:
+    LineItem:
+    SalesOrder:
+    Campaign:
+    
+    ## AUTHENTICATION
+    Login:
+    Logout:
+    PersistentLogin:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+    peptide_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://auth.biopeptidetracker.com/oauth
+          scopes:
+            read:health: read health data
+            write:health: modify health data
+            read:peptides: read peptide data
+            write:peptides: modify peptide data
+            admin:system: system administration
+
+    api_key:
+      type: apiKey
+      in: header
+      name: X-API-Key
